@@ -1,0 +1,10 @@
+#logging:
+#  level:
+#    ru.zagamaza.sublearn.subtitles.client.imdb.ImdbClient: DEBUG
+#    ru.zagamaza.sublearn.subtitles.client.opensubtitles.OpenSubtitlesClient: DEBUG
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 160000000
+        readTimeout: 160000000
