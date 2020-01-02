@@ -13,20 +13,20 @@ import java.util.stream.IntStream;
 
 import static java.util.stream.Collectors.toList;
 
-@SpringBootTest
+//@SpringBootTest
 class ImdbClientTest {
 
     @Autowired
     ImdbClient imdbClient;
 
-    @Test
+//    @Test
     public void testClient() {
 
         System.out.println(imdbClient.search("860b2ec4", "How i met"));
 
     }
 
-    @Test
+//    @Test
     public void testClientImdbId() {
 
         System.out.println(imdbClient.getByImdb("860b2ec4", "tt0460649"));

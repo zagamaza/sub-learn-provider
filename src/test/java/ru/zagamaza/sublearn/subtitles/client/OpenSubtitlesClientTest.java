@@ -8,13 +8,13 @@ import ru.zagamaza.sublearn.subtitles.client.opensubtitles.SubtitleInfo;
 
 import java.util.List;
 
-@SpringBootTest
+//@SpringBootTest
 class OpenSubtitlesClientTest {
 
     @Autowired
     OpenSubtitlesClient openSubtitlesClient;
 
-    @Test
+//    @Test
     public void testClient() {
         List<SubtitleInfo> big_bang = openSubtitlesClient.searchByName("big bang");
 

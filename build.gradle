@@ -1,17 +1,33 @@
+buildscript {
+	ext {
+		springBootVersion = '2.1.6.RELEASE'
+	}
+	repositories {
+		mavenCentral()
+		jcenter()
+	}
+	dependencies {
+		classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}",
+				'com.bmuschko:gradle-docker-plugin:4.9.0')
+	}
+}
 plugins {
 	id 'org.springframework.boot' version '2.2.2.RELEASE'
 	id 'io.spring.dependency-management' version '1.0.8.RELEASE'
 	id 'java'
 }
 
+
+configurations {
+	bootJar.archiveName = "${project.name}.jar"
+}
+
+apply from: 'version/version.gradle'
+apply from: 'docker/docker.gradle'
+
 group = 'ru.zagamaza.sublearn'
 sourceCompatibility = '11'
 
-configurations {
-	compileOnly {
-		extendsFrom annotationProcessor
-	}
-}
 
 repositories {
 	mavenCentral()
