@@ -4,15 +4,15 @@
 #    ru.zagamaza.sublearn.subtitles.client.opensubtitles.OpenSubtitlesClient: DEBUG
 
 opensubtitles:
-  useragent: zagamaza
+  useragent:
 imdb:
   api:
-    key: 860b2ec4
+    key:
 sublearn:
   back:
     url: http://imbir.ga:8080/api/
-    login: imbir
-    password: 7654331imb
+    login:
+    password:
     
 feign:
   client:
