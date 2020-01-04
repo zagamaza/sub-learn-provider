@@ -17,20 +17,25 @@ import static ru.zagamaza.sublearn.subtitles.util.DtoUtils.toFoundCollection;
 public class ImdbSearchService {
 
     private final ImdbClient imdbClient;
+
     @Value("${imdb.api.key}")
     public void setApiKey(String apiKey) {
         this.apiKey = apiKey;
     }
+
     private String apiKey;
 
 
     public List<FoundCollection> findCollection(String title) {
-        return imdbClient.search(apiKey, title).getSearch().stream()
-                .map(DtoUtils::toFoundCollection)
-                .collect(Collectors.toList());
+        return imdbClient.search(apiKey, title)
+                         .getSearch()
+                         .stream()
+                         .map(DtoUtils::toFoundCollection)
+                         .collect(Collectors.toList());
     }
 
     public FoundCollection findCollectionByImdbId(String imdbId) {
         return toFoundCollection(imdbClient.getByImdb(apiKey, imdbId));
     }
+
 }

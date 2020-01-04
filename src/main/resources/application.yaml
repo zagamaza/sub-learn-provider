@@ -13,7 +13,10 @@ sublearn:
     url: http://imbir.ga:8080/api/
     login:
     password:
-    
+
+project:
+  version: '@project.version@'
+
 feign:
   client:
     config:

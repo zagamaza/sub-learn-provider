@@ -17,7 +17,7 @@ public class CollectionDto {
 
     private Long id;
 
-    private Long imdbId;
+    private String imdbId;
 
     private List<EpisodeDto> episodeDtos;
 
