@@ -67,14 +67,15 @@ public class SubtitlesUploadService {
             for (Season season : seasons) {
                 for (Episode episode : season.getEpisodes()) {
                     if (!episodeExists(collectionDto, season, episode)) {
-                        EpisodeDto episodeDto = createEpisode(collectionDto, season, episode);
                         File sub = getSubtitleFileByUrl(episode.getSubtitleUrl());
+                        EpisodeDto episodeDto = createEpisode(collectionDto, season, episode);
                         uploadFileAndGetEpisode(episodeDto.getId(), sub);
                     }
                 }
             }
         } catch (Exception e) {
             sendFailNotification(imdbMovie, userId);
+            return;
         }
         sendSuccessNotification(collectionDto, userId);
     }
@@ -120,7 +121,7 @@ public class SubtitlesUploadService {
     @SneakyThrows
     @Retryable(
             value = {Exception.class},
-            maxAttempts = 20,
+            maxAttempts = 40,
             backoff = @Backoff(delay = 30000))
     private File getSubtitleFileByUrl(String subtitleUrl) {
         File sub = File.createTempFile("sub", "");
