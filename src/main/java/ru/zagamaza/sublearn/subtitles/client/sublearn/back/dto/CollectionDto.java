@@ -37,6 +37,8 @@ public class CollectionDto {
 
     private boolean isSerial;
 
+    private boolean isFinished;
+
     private LocalDateTime created;
 
 

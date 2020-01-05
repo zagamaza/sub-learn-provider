@@ -27,7 +27,7 @@ public class ImdbSearchService {
 
 
     public List<FoundCollection> findCollection(String title) {
-        return imdbClient.search(apiKey, title)
+        return imdbClient.search(apiKey, title, "series")
                          .getSearch()
                          .stream()
                          .map(DtoUtils::toFoundCollection)

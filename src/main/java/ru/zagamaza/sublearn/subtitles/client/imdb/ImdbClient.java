@@ -12,7 +12,8 @@ public interface ImdbClient {
     @GetMapping
     SearchWrapper search(
             @RequestParam(value = "apiKey") String apiKey,
-            @RequestParam("s") String query
+            @RequestParam("s") String query,
+            @RequestParam("type") String type
     );
 
     @GetMapping

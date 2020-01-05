@@ -16,7 +16,14 @@ class OpenSubtitlesClientTest {
 
 //    @Test
     public void testClient() {
-        List<SubtitleInfo> big_bang = openSubtitlesClient.searchByName("big bang");
+        List<SubtitleInfo> big_bang = openSubtitlesClient.searchByName("The Lord of the Rings");
+
+        System.out.println(big_bang);
+
+    }
+//    @Test
+    public void testClientImdbId() {
+        List<SubtitleInfo> big_bang = openSubtitlesClient.searchByImdb("tt0167260");
 
         System.out.println(big_bang);
 

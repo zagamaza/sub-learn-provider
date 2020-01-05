@@ -1,8 +1,9 @@
 package ru.zagamaza.sublearn.subtitles.service;
 
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import ru.zagamaza.sublearn.subtitles.client.opensubtitles.OpenSubtitlesClient;
 import ru.zagamaza.sublearn.subtitles.client.opensubtitles.SubtitleInfo;
@@ -11,7 +12,6 @@ import ru.zagamaza.sublearn.subtitles.dto.Season;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Supplier;
 
 import static ru.zagamaza.sublearn.subtitles.client.opensubtitles.OpenSuLang.eng;
 
@@ -23,8 +23,11 @@ public class SubtitlesService {
 
     private final OpenSubtitlesClient openSubtitlesClient;
 
+    @Retryable(
+            value = RuntimeException.class,
+            maxAttempts = 20,
+            backoff = @Backoff(delay = 30000, multiplier = 2))
     public List<Season> getSubtitles(String imdbId) {
-
         return recursiveSearchSeasons(imdbId, 1);
     }
 
@@ -45,7 +48,7 @@ public class SubtitlesService {
 
     private List<Episode> recursiveSearchEpisodes(String imdbId, Integer currentSeason, Integer currentEpisode) {
         System.out.println("ep - " + currentEpisode);
-        List<SubtitleInfo> subtitleInfos = retry(() -> openSubtitlesClient.searchByImdb(imdbId, currentSeason, currentEpisode, eng));
+        List<SubtitleInfo> subtitleInfos = openSubtitlesClient.searchByImdb(imdbId, currentSeason, currentEpisode, eng);
         if (subtitleInfos.isEmpty()) {
             return new ArrayList<>();
         }
@@ -57,18 +60,6 @@ public class SubtitlesService {
                         .subtitleUrl(subtitleInfo.getZipDownloadLink())
                         .build());
         return episodes;
-    }
-
-    private List<SubtitleInfo> retry(Supplier<List<SubtitleInfo>> supplier) {
-
-        for (int i = 0; i < 10; i++) {
-            try {
-                return supplier.get();
-            } catch (Exception e) {
-                log.warn("OpenSubtitle ERROR ", e);
-            }
-        }
-        throw new RuntimeException("OpenSubtitle ERROR cannot get");
     }
 
 }

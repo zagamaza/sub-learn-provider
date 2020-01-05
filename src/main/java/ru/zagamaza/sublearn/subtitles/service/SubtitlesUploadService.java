@@ -16,14 +16,10 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import ru.zagamaza.sublearn.subtitles.client.sublearn.back.CollectionClientApi;
 import ru.zagamaza.sublearn.subtitles.client.sublearn.back.EpisodeClientApi;
-import ru.zagamaza.sublearn.subtitles.client.sublearn.back.NotificationClient;
 import ru.zagamaza.sublearn.subtitles.client.sublearn.back.dto.CollectionDto;
 import ru.zagamaza.sublearn.subtitles.client.sublearn.back.dto.CollectionRequest;
 import ru.zagamaza.sublearn.subtitles.client.sublearn.back.dto.EpisodeDto;
 import ru.zagamaza.sublearn.subtitles.client.sublearn.back.dto.EpisodeRequest;
-import ru.zagamaza.sublearn.subtitles.client.sublearn.back.dto.NotificationDto;
-import ru.zagamaza.sublearn.subtitles.client.sublearn.back.dto.NotificationType;
-import ru.zagamaza.sublearn.subtitles.client.sublearn.back.dto.UserDto;
 import ru.zagamaza.sublearn.subtitles.dto.Episode;
 import ru.zagamaza.sublearn.subtitles.dto.FoundCollection;
 import ru.zagamaza.sublearn.subtitles.dto.Season;
@@ -40,8 +36,7 @@ import static ru.zagamaza.sublearn.subtitles.util.DtoUtils.toCollectionRequest;
 @RequiredArgsConstructor
 public class SubtitlesUploadService {
 
-    private static final String COLLECTION_UPLOAD = "🎉 Коллекция *%s* успешно загружена\nМожете найти ее в своих коллекциях.";
-    private static final String COLLECTION_FAIL = "😓 К сожалению, мы не смогли загрузить коллекцию *%s*.";
+    public static final String DELIMITER = "-";
 
     @Value("${sublearn.back.url}")
     private String sublearnBackUrl;
@@ -49,11 +44,15 @@ public class SubtitlesUploadService {
     private final RestTemplate restTemplate;
     private final CollectionClientApi collectionClientApi;
     private final EpisodeClientApi episodeClientApi;
-    private final NotificationClient notificationClient;
+    private final NotificationService notificationService;
 
+    @Retryable(
+            value = {Exception.class},
+            maxAttempts = 40,
+            backoff = @Backoff(delay = 30000, multiplier = 2))
     public void upload(FoundCollection imdbMovie, List<Season> seasons, Long userId) {
         if (seasons.isEmpty()) {
-            sendFailNotification(imdbMovie, userId);
+            notificationService.sendFailNotification(imdbMovie, userId);
             return;
         }
         CollectionDto collectionDto = collectionClientApi.getByImdbId(imdbMovie.getImdbID());
@@ -74,10 +73,18 @@ public class SubtitlesUploadService {
                 }
             }
         } catch (Exception e) {
-            sendFailNotification(imdbMovie, userId);
+            notificationService.sendFailNotification(imdbMovie, userId);
             return;
         }
-        sendSuccessNotification(collectionDto, userId);
+        updateStatusCollection(collectionDto, imdbMovie, userId);
+        notificationService.sendSuccessNotification(collectionDto, userId);
+    }
+
+    private void updateStatusCollection(CollectionDto collectionDto, FoundCollection imdbMovie, Long userId) {
+        CollectionRequest collectionRequest = toCollectionRequest(collectionDto);
+        collectionRequest.setFinished(calculateFinished(imdbMovie));
+        collectionRequest.setUserId(userId);
+        collectionClientApi.update(collectionRequest);
     }
 
     private EpisodeDto createEpisode(CollectionDto collectionDto, Season season, Episode episode) {
@@ -99,30 +106,12 @@ public class SubtitlesUploadService {
         return episodeDto != null;
     }
 
-    private void sendSuccessNotification(CollectionDto collectionDto, Long userId) {
-        NotificationDto notification = NotificationDto.builder()
-                                                      .notificationType(NotificationType.MESSAGE)
-                                                      .userDto(UserDto.builder().id(userId).build())
-                                                      .text(String.format(COLLECTION_UPLOAD, collectionDto.getName()))
-                                                      .build();
-        notificationClient.create(notification);
+    private boolean calculateFinished(FoundCollection imdbMovie) {
+        String[] years = imdbMovie.getYear().split(DELIMITER);
+        return years.length == 2;
     }
-
-    private void sendFailNotification(FoundCollection foundCollection, Long userId) {
-        NotificationDto notification = NotificationDto.builder()
-                                                      .notificationType(NotificationType.MESSAGE)
-                                                      .userDto(UserDto.builder().id(userId).build())
-                                                      .text(String.format(COLLECTION_FAIL, foundCollection.getTitle()))
-                                                      .build();
-        notificationClient.create(notification);
-    }
-
 
     @SneakyThrows
-    @Retryable(
-            value = {Exception.class},
-            maxAttempts = 40,
-            backoff = @Backoff(delay = 30000))
     private File getSubtitleFileByUrl(String subtitleUrl) {
         File sub = File.createTempFile("sub", "");
 
