@@ -5,38 +5,23 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class CollectionRequest {
+public class CollectionCondensedDto {
 
     private Long id;
-
     private String imdbId;
-
-    @NotNull
     private Lang lang;
-
-    @NotNull
-    private Long userId;
-
-    @NotNull
     private String name;
-
     private String url;
-
     private Integer rating;
-
     private boolean isShared;
-
+    private Boolean isSerial;
     private boolean isFinished;
-
     private LocalDateTime created;
-
-    private boolean isSerial;
 
 }

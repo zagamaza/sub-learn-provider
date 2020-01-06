@@ -22,7 +22,7 @@ class ImdbClientTest {
 //    @Test
     public void testClient() {
 
-        System.out.println(imdbClient.search("860b2ec4", "How i met"));
+        System.out.println(imdbClient.search("860b2ec4", "How i met","series"));
 
     }
 
