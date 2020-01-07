@@ -1,0 +1,28 @@
+#logging:
+#  level:
+#    ru.zagamaza.sublearn.subtitles.client.imdb.ImdbClient: DEBUG
+#    ru.zagamaza.sublearn.subtitles.client.opensubtitles.OpenSubtitlesClient: DEBUG
+
+opensubtitles:
+  useragent:
+imdb:
+  api:
+    key:
+sublearn:
+  back:
+    url: http://imbir.ga:8080/api/
+    login:
+    password:
+upload:
+  not:
+    finish:
+      serials: true
+project:
+  version: '@project.version@'
+
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 160000000
+        readTimeout: 160000000
