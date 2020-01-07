@@ -88,6 +88,7 @@ public class SubtitlesUploadService {
                     } catch (Exception e){
                         log.error(collectionDto.getName() + " " + episodeDto.getSeason() + "-" + episodeDto.getEpisode(), e);
                         episodeClientApi.delete(episodeDto.getId());
+                        return;
                     }
                 }
             }
