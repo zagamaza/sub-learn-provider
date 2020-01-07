@@ -2,6 +2,7 @@ package ru.zagamaza.sublearn.subtitles.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpEntity;
@@ -32,6 +33,7 @@ import java.util.zip.ZipInputStream;
 
 import static ru.zagamaza.sublearn.subtitles.util.DtoUtils.toCollectionRequest;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SubtitlesUploadService {
@@ -50,11 +52,25 @@ public class SubtitlesUploadService {
             value = {Exception.class},
             maxAttempts = 40,
             backoff = @Backoff(delay = 30000, multiplier = 2))
-    public void upload(FoundCollection imdbMovie, List<Season> seasons, Long userId) {
+    public void uploadWithSendStatus(FoundCollection imdbMovie, List<Season> seasons, Long userId) {
         if (seasons.isEmpty()) {
             notificationService.sendFailNotification(imdbMovie, userId);
             return;
         }
+        try {
+            upload(imdbMovie, seasons, userId);
+        } catch (Exception e) {
+            notificationService.sendFailNotification(imdbMovie, userId);
+            return;
+        }
+        notificationService.sendSuccessNotification(imdbMovie, userId);
+    }
+
+    @Retryable(
+            value = {Exception.class},
+            maxAttempts = 40,
+            backoff = @Backoff(delay = 30000, multiplier = 2))
+    public void upload(FoundCollection imdbMovie, List<Season> seasons, Long userId){
         CollectionDto collectionDto = collectionClientApi.getByImdbId(imdbMovie.getImdbID());
         if (collectionDto == null) {
             CollectionRequest collectionRequest = toCollectionRequest(imdbMovie);
@@ -62,23 +78,23 @@ public class SubtitlesUploadService {
             collectionDto = collectionClientApi.create(collectionRequest);
         }
 
-        try {
-            for (Season season : seasons) {
-                for (Episode episode : season.getEpisodes()) {
-                    if (!episodeExists(collectionDto, season, episode)) {
-                        File sub = getSubtitleFileByUrl(episode.getSubtitleUrl());
-                        EpisodeDto episodeDto = createEpisode(collectionDto, season, episode);
+        for (Season season : seasons) {
+            for (Episode episode : season.getEpisodes()) {
+                if (!episodeExists(collectionDto, season, episode)) {
+                    File sub = getSubtitleFileByUrl(episode.getSubtitleUrl());
+                    EpisodeDto episodeDto = createEpisode(collectionDto, season, episode);
+                    try {
                         uploadFileAndGetEpisode(episodeDto.getId(), sub);
+                    } catch (Exception e){
+                        log.error(collectionDto.getName() + " " + episodeDto.getSeason() + "-" + episodeDto.getEpisode(), e);
+                        episodeClientApi.delete(episodeDto.getId());
                     }
                 }
             }
-        } catch (Exception e) {
-            notificationService.sendFailNotification(imdbMovie, userId);
-            return;
         }
         updateStatusCollection(collectionDto, imdbMovie, userId);
-        notificationService.sendSuccessNotification(collectionDto, userId);
     }
+
 
     private void updateStatusCollection(CollectionDto collectionDto, FoundCollection imdbMovie, Long userId) {
         CollectionRequest collectionRequest = toCollectionRequest(collectionDto);

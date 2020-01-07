@@ -49,7 +49,7 @@ public class SubtitleController {
             notificationService.sendFailNotification(foundCollection, userId);
             return;
         }
-        subtitlesUploadService.upload(foundCollection, subtitles, userId);
+        subtitlesUploadService.uploadWithSendStatus(foundCollection, subtitles, userId);
     }
 
 }

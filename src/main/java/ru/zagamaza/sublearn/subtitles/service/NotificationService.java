@@ -28,11 +28,11 @@ public class NotificationService {
         notificationClient.create(notification);
     }
 
-    public void sendSuccessNotification(CollectionDto collectionDto, Long userId) {
+    public void sendSuccessNotification(FoundCollection foundCollection, Long userId) {
         NotificationDto notification = NotificationDto.builder()
                                                       .notificationType(NotificationType.MESSAGE)
                                                       .userDto(UserDto.builder().id(userId).build())
-                                                      .text(String.format(COLLECTION_UPLOAD, collectionDto.getName()))
+                                                      .text(String.format(COLLECTION_UPLOAD, foundCollection.getTitle()))
                                                       .build();
         notificationClient.create(notification);
     }
