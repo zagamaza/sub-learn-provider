@@ -25,7 +25,7 @@ public class SubtitlesService {
 
     @Retryable(
             value = RuntimeException.class,
-            maxAttempts = 20,
+            maxAttempts = 3,
             backoff = @Backoff(delay = 30000, multiplier = 2))
     public List<Season> getSubtitles(String imdbId) {
         return recursiveSearchSeasons(imdbId, 1);

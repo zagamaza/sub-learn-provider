@@ -5,10 +5,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.ToString;
 
+import java.io.Serializable;
+
 @Data
 @ToString()
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class SubtitleInfo {
+public class SubtitleInfo implements Serializable {
 
     @JsonProperty("MatchedBy")
     private String matchedBy;
@@ -128,4 +130,5 @@ public class SubtitleInfo {
     private String queryNumber;
     @JsonProperty("Score")
     private Double score;
+
 }

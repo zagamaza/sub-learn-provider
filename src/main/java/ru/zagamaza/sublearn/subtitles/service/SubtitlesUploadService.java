@@ -15,6 +15,7 @@ import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestTemplate;
+import ru.zagamaza.sublearn.subtitles.client.opensubtitles.OpenSubtitlesClient;
 import ru.zagamaza.sublearn.subtitles.client.sublearn.back.CollectionClientApi;
 import ru.zagamaza.sublearn.subtitles.client.sublearn.back.EpisodeClientApi;
 import ru.zagamaza.sublearn.subtitles.client.sublearn.back.dto.CollectionDto;
@@ -47,11 +48,12 @@ public class SubtitlesUploadService {
     private final CollectionClientApi collectionClientApi;
     private final EpisodeClientApi episodeClientApi;
     private final NotificationService notificationService;
+    private final OpenSubtitlesClient openSubtitlesClient;
 
     @Retryable(
             value = {Exception.class},
-            maxAttempts = 40,
-            backoff = @Backoff(delay = 30000, multiplier = 2))
+            maxAttempts = 3,
+            backoff = @Backoff(delay = 5000, multiplier = 2))
     public void uploadWithSendStatus(FoundCollection imdbMovie, List<Season> seasons, Long userId) {
         if (seasons.isEmpty()) {
             notificationService.sendFailNotification(imdbMovie, userId);
@@ -68,8 +70,8 @@ public class SubtitlesUploadService {
 
     @Retryable(
             value = {Exception.class},
-            maxAttempts = 40,
-            backoff = @Backoff(delay = 30000, multiplier = 2))
+            maxAttempts = 3,
+            backoff = @Backoff(delay = 5000, multiplier = 2))
     public void upload(FoundCollection imdbMovie, List<Season> seasons, Long userId){
         CollectionDto collectionDto = collectionClientApi.getByImdbId(imdbMovie.getImdbID());
         if (collectionDto == null) {
@@ -81,7 +83,7 @@ public class SubtitlesUploadService {
         for (Season season : seasons) {
             for (Episode episode : season.getEpisodes()) {
                 if (!episodeExists(collectionDto, season, episode)) {
-                    File sub = getSubtitleFileByUrl(episode.getSubtitleUrl());
+                    File sub = openSubtitlesClient.getSubtitleFileByUrl(episode.getSubtitleUrl());
                     EpisodeDto episodeDto = createEpisode(collectionDto, season, episode);
                     try {
                         uploadFileAndGetEpisode(episodeDto.getId(), sub);
@@ -127,21 +129,6 @@ public class SubtitlesUploadService {
         String[] years = imdbMovie.getYear().split(DELIMITER);
         return years.length == 2;
     }
-
-    @SneakyThrows
-    private File getSubtitleFileByUrl(String subtitleUrl) {
-        File sub = File.createTempFile("sub", "");
-
-        try (
-                ZipInputStream inputStream = new ZipInputStream(new URL(subtitleUrl).openStream());
-                FileOutputStream fileOS = new FileOutputStream(sub)
-        ) {
-            inputStream.getNextEntry();
-            inputStream.transferTo(fileOS);
-        }
-        return sub;
-    }
-
 
     private EpisodeDto uploadFileAndGetEpisode(Long episodeID, File file) {
         LinkedMultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
