@@ -3,6 +3,11 @@
 #    ru.zagamaza.sublearn.subtitles.client.imdb.ImdbClient: DEBUG
 #    ru.zagamaza.sublearn.subtitles.client.opensubtitles.OpenSubtitlesClient: DEBUG
 
+spring:
+  redis:
+    host: redis
+    port: 6379
+
 opensubtitles:
   useragent:
 imdb:

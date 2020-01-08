@@ -1,40 +1,66 @@
 package ru.zagamaza.sublearn.subtitles.client.opensubtitles;
 
-import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
+import org.springframework.stereotype.Component;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.net.URL;
 import java.util.List;
+import java.util.zip.ZipInputStream;
 
-@FeignClient(name = "open-subtitle", url = "https://rest.opensubtitles.org/")
-@RequestMapping(value = "/search", headers = "User-Agent=${opensubtitles.useragent}")
-public interface OpenSubtitlesClient {
+@Component
+@RequiredArgsConstructor
+public class OpenSubtitlesClient {
 
-    @GetMapping("/imdbid-{imdbId}")
-    List<SubtitleInfo> searchByImdb(
-            @PathVariable("imdbId") String imdbId
-    );
+    private final OpenSubtitlesClientApi client;
 
-    @GetMapping("/imdbid-{imdbId}/season-{season}/episode-{episode}/sublanguageid-{language}")
-    List<SubtitleInfo> searchByImdb(
-            @PathVariable("imdbId") String imdbId,
-            @PathVariable("season") Integer season,
-            @PathVariable("episode") Integer episode,
-            @PathVariable("language") OpenSuLang language
-    );
+    public List<SubtitleInfo> searchByImdb(String imdbId) {
+        return client.searchByImdb(imdbId);
+    }
 
-    @GetMapping("/query-{name}")
-    List<SubtitleInfo> searchByName(
-            @PathVariable("name") String name
-    );
+    @Cacheable(value = "subtitle", key = "{#imdbId, #season, #episode, #language}")
+    @Retryable(
+            value = RuntimeException.class,
+            maxAttempts = 10,
+            backoff = @Backoff(delay = 30000, multiplier = 2))
+    public List<SubtitleInfo> searchByImdb(String imdbId, Integer season, Integer episode, OpenSuLang language) {
+        return client.searchByImdb(imdbId, season, episode, language);
+    }
 
-    @GetMapping("/query-{name}/season-{season}/episode-{episode}/sublanguageid-{language}")
-    List<SubtitleInfo> searchByName(
-            @PathVariable("name") String name,
-            @PathVariable("season") Integer season,
-            @PathVariable("episode") Integer episode,
-            @PathVariable("language") OpenSuLang language
-    );
+    public List<SubtitleInfo> searchByName(String name) {
+        return client.searchByName(name);
+    }
+
+    @Cacheable(value = "subtitle", key = "{#name, #season, #episode, #language}")
+    @Retryable(
+            value = RuntimeException.class,
+            maxAttempts = 10,
+            backoff = @Backoff(delay = 30000, multiplier = 2))
+    public List<SubtitleInfo> searchByName(String name, Integer season, Integer episode, OpenSuLang language) {
+        return client.searchByName(name, season, episode, language);
+    }
+
+    @SneakyThrows
+    @Retryable(
+            value = RuntimeException.class,
+            maxAttempts = 10,
+            backoff = @Backoff(delay = 30000, multiplier = 2))
+    public File getSubtitleFileByUrl(String subtitleUrl) {
+        File sub = File.createTempFile("sub", "");
+
+        try (
+                ZipInputStream inputStream = new ZipInputStream(new URL(subtitleUrl).openStream());
+                FileOutputStream fileOS = new FileOutputStream(sub)
+        ) {
+            inputStream.getNextEntry();
+            inputStream.transferTo(fileOS);
+        }
+        return sub;
+    }
 
 }
