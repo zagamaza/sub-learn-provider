@@ -24,7 +24,7 @@ public class SubtitlesService {
     private final OpenSubtitlesClient openSubtitlesClient;
 
     @Retryable(
-            value = RuntimeException.class,
+            value = Exception.class,
             maxAttempts = 3,
             backoff = @Backoff(delay = 30000, multiplier = 2))
     public List<Season> getSubtitles(String imdbId) {
