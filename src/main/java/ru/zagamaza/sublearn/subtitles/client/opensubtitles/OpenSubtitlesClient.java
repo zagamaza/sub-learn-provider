@@ -25,7 +25,7 @@ public class OpenSubtitlesClient {
 
     @Cacheable(value = "subtitle", key = "{#imdbId, #season, #episode, #language}")
     @Retryable(
-            value = RuntimeException.class,
+            value = Exception.class,
             maxAttempts = 10,
             backoff = @Backoff(delay = 30000, multiplier = 2))
     public List<SubtitleInfo> searchByImdb(String imdbId, Integer season, Integer episode, OpenSuLang language) {
@@ -38,7 +38,7 @@ public class OpenSubtitlesClient {
 
     @Cacheable(value = "subtitle", key = "{#name, #season, #episode, #language}")
     @Retryable(
-            value = RuntimeException.class,
+            value = Exception.class,
             maxAttempts = 10,
             backoff = @Backoff(delay = 30000, multiplier = 2))
     public List<SubtitleInfo> searchByName(String name, Integer season, Integer episode, OpenSuLang language) {
@@ -47,7 +47,7 @@ public class OpenSubtitlesClient {
 
     @SneakyThrows
     @Retryable(
-            value = RuntimeException.class,
+            value = Exception.class,
             maxAttempts = 10,
             backoff = @Backoff(delay = 30000, multiplier = 2))
     public File getSubtitleFileByUrl(String subtitleUrl) {
