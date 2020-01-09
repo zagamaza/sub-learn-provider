@@ -62,6 +62,7 @@ public class SubtitlesUploadService {
         try {
             upload(imdbMovie, seasons, userId);
         } catch (Exception e) {
+            log.error("upload failed", e);
             notificationService.sendFailNotification(imdbMovie, userId);
             return;
         }
