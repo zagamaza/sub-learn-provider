@@ -63,8 +63,7 @@ public class SubtitlesUploadService {
             upload(imdbMovie, seasons, userId);
         } catch (Exception e) {
             log.error("upload failed", e);
-            notificationService.sendFailNotification(imdbMovie, userId);
-            return;
+            throw new RuntimeException(e.getMessage(), e);
         }
         notificationService.sendSuccessNotification(imdbMovie, userId);
     }
@@ -98,7 +97,6 @@ public class SubtitlesUploadService {
         }
         updateStatusCollection(collectionDto, imdbMovie, userId);
     }
-
 
     private void updateStatusCollection(CollectionDto collectionDto, FoundCollection imdbMovie, Long userId) {
         CollectionRequest collectionRequest = toCollectionRequest(collectionDto);

@@ -44,12 +44,11 @@ public class SubtitleController {
         List<Season> subtitles;
         try {
             subtitles = getSubtitles(imdbId);
+            subtitlesUploadService.uploadWithSendStatus(foundCollection, subtitles, userId);
         } catch (Exception e) {
             log.error(foundCollection.getTitle() + " fail upload", e);
             notificationService.sendFailNotification(foundCollection, userId);
-            return;
         }
-        subtitlesUploadService.uploadWithSendStatus(foundCollection, subtitles, userId);
     }
 
 }
