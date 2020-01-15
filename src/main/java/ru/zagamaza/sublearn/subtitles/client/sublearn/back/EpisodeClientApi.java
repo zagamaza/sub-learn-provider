@@ -20,6 +20,9 @@ public interface EpisodeClientApi {
     @GetMapping("/episodes/{id}/users/{userId}")
     Integer getLearnedPercent(@PathVariable("id") Long id, @PathVariable("userId") Long userId);
 
+    @GetMapping("/episodes/{id}/is_empty")
+    Boolean isEmpty(@PathVariable("id")  Long id);
+
     @GetMapping("/episodes/collections/{collectionId}/seasons")
     List<Integer> getSeasonsByCollectionId(@PathVariable("collectionId") Long collectionId);
 

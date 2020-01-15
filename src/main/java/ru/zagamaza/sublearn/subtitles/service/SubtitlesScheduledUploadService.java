@@ -1,6 +1,7 @@
 package ru.zagamaza.sublearn.subtitles.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -11,7 +12,7 @@ import ru.zagamaza.sublearn.subtitles.dto.Season;
 
 import java.util.List;
 
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SubtitlesScheduledUploadService {
@@ -32,15 +33,23 @@ public class SubtitlesScheduledUploadService {
      */
     @Scheduled(cron = "0 0 23 * * ?", zone = "Europe/Moscow")
     private void uploadNotFinishSerials() {
-        if (!isUploadNotFinishedSerials){
+        if (!isUploadNotFinishedSerials) {
             return;
         }
         List<CollectionCondensedDto> serials = collectionClientApi.findNotFinishedSerials();
-        serials.forEach(s -> {
-            FoundCollection foundCollection = imdbSearchService.findCollectionByImdbId(s.getImdbId());
-            List<Season> subtitles = subtitlesService.getSubtitles(s.getImdbId());
-            subtitlesUploadService.upload(foundCollection, subtitles, MAZANUR_USER_ID);
-        });
+        for (CollectionCondensedDto s : serials) {
+            FoundCollection foundCollection = FoundCollection.builder().build();
+            try {
+                foundCollection = imdbSearchService.findCollectionByImdbId(s.getImdbId());
+                List<Season> subtitles = subtitlesService.getSubtitles(s.getImdbId());
+                subtitlesUploadService.upload(foundCollection, subtitles, MAZANUR_USER_ID);
+                log.info(String.format("Collection %s upload success", foundCollection.getTitle()));
+
+            } catch (Exception e) {
+                log.error(String.format("Collection %s upload failed", foundCollection.getTitle()), e);
+            }
+        }
+
     }
 
 }

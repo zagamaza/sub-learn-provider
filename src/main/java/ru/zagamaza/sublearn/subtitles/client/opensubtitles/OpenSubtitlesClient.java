@@ -2,11 +2,14 @@ package ru.zagamaza.sublearn.subtitles.client.opensubtitles;
 
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -27,11 +30,11 @@ public class OpenSubtitlesClient {
         return client.searchByImdb(getRandomAgent(), imdbId);
     }
 
-    @Cacheable(value = "subtitle", key = "{#imdbId, #season, #episode, #language}")
+    @Cacheable(value = "subtitle", key = "{#imdbId, #season, #episode, #language}", unless = "#result.isEmpty()")
     @Retryable(
             value = Exception.class,
-            maxAttempts = 10,
-            backoff = @Backoff(delay = 30000, multiplier = 2))
+            maxAttempts = 3,
+            backoff = @Backoff(delay = 5000, multiplier = 2))
     public List<SubtitleInfo> searchByImdb(String imdbId, Integer season, Integer episode, OpenSuLang language) {
         return client.searchByImdb(getRandomAgent(), imdbId, season, episode, language);
     }
@@ -63,6 +66,12 @@ public class OpenSubtitlesClient {
         ) {
             inputStream.getNextEntry();
             inputStream.transferTo(fileOS);
+        }
+
+        FileSystemResource fileSystemResource = new FileSystemResource(sub);
+        String text = IOUtils.toString(fileSystemResource.getInputStream());
+        if (StringUtils.isEmpty(text)){
+            throw new RuntimeException("File empty");
         }
         return sub;
     }

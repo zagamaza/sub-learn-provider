@@ -1,7 +1,6 @@
 package ru.zagamaza.sublearn.subtitles.service;
 
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
@@ -27,10 +26,7 @@ import ru.zagamaza.sublearn.subtitles.dto.FoundCollection;
 import ru.zagamaza.sublearn.subtitles.dto.Season;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.net.URL;
 import java.util.List;
-import java.util.zip.ZipInputStream;
 
 import static ru.zagamaza.sublearn.subtitles.util.DtoUtils.toCollectionRequest;
 
@@ -73,6 +69,7 @@ public class SubtitlesUploadService {
             maxAttempts = 3,
             backoff = @Backoff(delay = 5000, multiplier = 2))
     public void upload(FoundCollection imdbMovie, List<Season> seasons, Long userId){
+        log.info("Start upload collection" + imdbMovie.getTitle());
         CollectionDto collectionDto = collectionClientApi.getByImdbId(imdbMovie.getImdbID());
         if (collectionDto == null) {
             CollectionRequest collectionRequest = toCollectionRequest(imdbMovie);
@@ -121,7 +118,10 @@ public class SubtitlesUploadService {
                 season.getSeason(),
                 episode.getEpisode()
         );
-        return episodeDto != null;
+        if (episodeDto == null){
+            return false;
+        }
+        return !episodeClientApi.isEmpty(episodeDto.getId());
     }
 
     private boolean calculateFinished(FoundCollection imdbMovie) {
@@ -140,6 +140,7 @@ public class SubtitlesUploadService {
                 new HttpEntity(map, headers),
                 EpisodeDto.class
         );
+        file.delete();
         return response.getBody();
     }
 
