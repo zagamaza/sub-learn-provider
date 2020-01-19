@@ -55,7 +55,7 @@ public class OpenSubtitlesClient {
     @SneakyThrows
     @Retryable(
             value = Exception.class,
-            maxAttempts = 10,
+            maxAttempts = 3,
             backoff = @Backoff(delay = 30000, multiplier = 3))
     public File getSubtitleFileByUrl(String subtitleUrl) {
         File sub = File.createTempFile("sub", "");

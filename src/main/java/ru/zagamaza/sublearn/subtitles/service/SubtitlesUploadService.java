@@ -68,7 +68,7 @@ public class SubtitlesUploadService {
             value = {Exception.class},
             maxAttempts = 3,
             backoff = @Backoff(delay = 5000, multiplier = 2))
-    public void upload(FoundCollection imdbMovie, List<Season> seasons, Long userId){
+    public void upload(FoundCollection imdbMovie, List<Season> seasons, Long userId) {
         log.info("Start upload collection" + imdbMovie.getTitle());
         CollectionDto collectionDto = collectionClientApi.getByImdbId(imdbMovie.getImdbID());
         if (collectionDto == null) {
@@ -79,9 +79,12 @@ public class SubtitlesUploadService {
 
         for (Season season : seasons) {
             for (Episode episode : season.getEpisodes()) {
-                if (!episodeExists(collectionDto, season, episode)) {
+                EpisodeDto episodeDto = getEpisode(collectionDto, season, episode);
+                if (episodeDto == null) {
+                    episodeDto = createEpisode(collectionDto, season, episode);
+                }
+                if (Boolean.TRUE.equals(episodeClientApi.isEmpty(episodeDto.getId()))) {
                     File sub = openSubtitlesClient.getSubtitleFileByUrl(episode.getSubtitleUrl());
-                    EpisodeDto episodeDto = createEpisode(collectionDto, season, episode);
                     try {
                         uploadFileAndGetEpisode(episodeDto.getId(), sub);
                     } catch (Exception e){
@@ -93,6 +96,14 @@ public class SubtitlesUploadService {
             }
         }
         updateStatusCollection(collectionDto, imdbMovie, userId);
+    }
+
+    EpisodeDto getEpisode(CollectionDto collectionDto, Season season, Episode episode){
+       return episodeClientApi.getByCollectionIdAndSeasonAndSeries(
+                collectionDto.getId(),
+                season.getSeason(),
+                episode.getEpisode()
+        );
     }
 
     private void updateStatusCollection(CollectionDto collectionDto, FoundCollection imdbMovie, Long userId) {
@@ -112,18 +123,6 @@ public class SubtitlesUploadService {
         );
     }
 
-    private boolean episodeExists(CollectionDto collectionDto, Season season, Episode episode) {
-        EpisodeDto episodeDto = episodeClientApi.getByCollectionIdAndSeasonAndSeries(
-                collectionDto.getId(),
-                season.getSeason(),
-                episode.getEpisode()
-        );
-        if (episodeDto == null){
-            return false;
-        }
-        return !episodeClientApi.isEmpty(episodeDto.getId());
-    }
-
     private boolean calculateFinished(FoundCollection imdbMovie) {
         String[] years = imdbMovie.getYear().split(DELIMITER);
         return years.length == 2;
@@ -140,7 +139,6 @@ public class SubtitlesUploadService {
                 new HttpEntity(map, headers),
                 EpisodeDto.class
         );
-        file.delete();
         return response.getBody();
     }
 
