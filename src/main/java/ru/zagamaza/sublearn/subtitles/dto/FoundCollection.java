@@ -7,6 +7,7 @@ import lombok.Data;
 @Data
 @Builder
 public class FoundCollection {
+
     @JsonProperty("title")
     private String title;
     @JsonProperty("year")
@@ -17,4 +18,5 @@ public class FoundCollection {
     private String type;
     @JsonProperty("poster")
     private String poster;
+
 }

@@ -1,14 +1,15 @@
 package ru.zagamaza.sublearn.subtitles.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.zagamaza.sublearn.subtitles.client.sublearn.back.NotificationClient;
-import ru.zagamaza.sublearn.subtitles.client.sublearn.back.dto.CollectionDto;
 import ru.zagamaza.sublearn.subtitles.client.sublearn.back.dto.NotificationDto;
 import ru.zagamaza.sublearn.subtitles.client.sublearn.back.dto.NotificationType;
 import ru.zagamaza.sublearn.subtitles.client.sublearn.back.dto.UserDto;
 import ru.zagamaza.sublearn.subtitles.dto.FoundCollection;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class NotificationService {
@@ -20,6 +21,7 @@ public class NotificationService {
     private final NotificationClient notificationClient;
 
     public void sendFailNotification(FoundCollection foundCollection, Long userId) {
+        log.error(String.format("Collection %s upload failed", foundCollection.getTitle()));
         NotificationDto notification = NotificationDto.builder()
                                                       .notificationType(NotificationType.MESSAGE)
                                                       .userDto(UserDto.builder().id(userId).build())
@@ -29,6 +31,7 @@ public class NotificationService {
     }
 
     public void sendSuccessNotification(FoundCollection foundCollection, Long userId) {
+        log.info(String.format("Collection %s upload success", foundCollection.getTitle()));
         NotificationDto notification = NotificationDto.builder()
                                                       .notificationType(NotificationType.MESSAGE)
                                                       .userDto(UserDto.builder().id(userId).build())
