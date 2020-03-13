@@ -19,6 +19,8 @@ sublearn:
     login:
     password:
 upload:
+  process:
+    cron: 0 0 23 * * ?
   not:
     finish:
       serials: true

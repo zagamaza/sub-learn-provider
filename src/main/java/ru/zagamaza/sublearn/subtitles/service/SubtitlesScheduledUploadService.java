@@ -31,7 +31,7 @@ public class SubtitlesScheduledUploadService {
      * Метод uploadNotFinishSerials, каждые день в 23:00 проверяет не законченнные сериалы,
      * на наличие новых не загруженных серий
      */
-    @Scheduled(cron = "0 0 23 * * ?", zone = "Europe/Moscow")
+    @Scheduled(cron = "${upload.process.cron}", zone = "Europe/Moscow")
     private void uploadNotFinishSerials() {
         if (!isUploadNotFinishedSerials) {
             return;
